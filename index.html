@@ -1,0 +1,742 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>首都高 車窓ドライブ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@300;400;600&family=Oxanium:wght@300;500&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --w:#FFFFFF; --w90:rgba(255,255,255,.9); --w60:rgba(255,255,255,.6); --w35:rgba(255,255,255,.35);
+  --w18:rgba(255,255,255,.18); --w10:rgba(255,255,255,.1);
+  --glass:rgba(255,255,255,.14); --ink:#1B1F1D;
+  --bg:#F3F4F3; --bg-ink:#1B1F1D;
+  --jp:"M PLUS 1","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --num:"Oxanium","DIN Alternate",system-ui,sans-serif;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#121413; --bg-ink:#F3F4F3; } }
+:root[data-theme="dark"]{ --bg:#121413; --bg-ink:#F3F4F3; }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:#000;color:var(--w);font-family:var(--jp);font-weight:400;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--w);outline-offset:3px}
+
+/* start */
+#start{position:fixed;inset:0;background:var(--bg);color:var(--bg-ink);display:grid;place-items:center;padding:24px;z-index:20;overflow:auto}
+.card{max-width:760px;width:100%}
+.map{margin:0 -8px 8px}
+.map svg{width:100%;height:auto;display:block;overflow:visible}
+.map text{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","M PLUS 1",sans-serif;fill:var(--bg-ink)}
+.map .line{fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.map .node{cursor:pointer}
+.map .node circle.dot{fill:#fff;stroke:var(--bg-ink);stroke-width:2.5}
+.map .node.in circle.dot{fill:var(--bg-ink)}
+.map .node.end circle.dot{fill:var(--bg-ink);r:11}
+.map .node:hover circle.dot,.map .node:focus-visible circle.dot{stroke-width:4}
+.map .node:focus{outline:none}
+.map .node.out text{opacity:.4}
+.map .tag{font-size:14px;fill:var(--bg)}
+.map .tagbg{fill:var(--bg-ink)}
+.map .jct rect{fill:#222}
+.map .jct text{fill:#fff;font-size:16px}
+.map .rname{font-size:15px}
+.pick{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;font-size:14px;margin:4px 0 6px}
+.pick select{font:inherit;color:var(--bg-ink);background:transparent;border:0;border-bottom:1px solid color-mix(in srgb,var(--bg-ink) 30%,transparent);padding:4px 2px;font-size:16px}
+.pick select option{color:#111}
+#summary{font-size:13px;opacity:.65;margin-bottom:10px}
+.card h1{margin:0 0 8px;font-weight:300;font-size:clamp(30px,8vw,42px);letter-spacing:.06em}
+.card p{margin:0 0 28px;line-height:1.8;font-size:14px;opacity:.7}
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid color-mix(in srgb,var(--bg-ink) 15%,transparent);font-size:14px}
+.field input{width:80px;padding:4px 0;border:0;background:transparent;text-align:right;font-family:var(--num);font-size:20px;color:var(--bg-ink)}
+.filebtn{display:block;text-align:center;margin-top:28px;padding:15px;border-radius:999px;cursor:pointer;font-size:16px;background:var(--bg-ink);color:var(--bg)}
+.filebtn input{position:absolute;opacity:0;width:1px;height:1px}
+.keys{margin-top:22px;font-size:12px;line-height:2;opacity:.6}
+.ownvid{display:block;text-align:center;margin-top:12px;font-size:13px;opacity:.65;text-decoration:underline;cursor:pointer}
+.ownvid input{position:absolute;opacity:0;width:1px;height:1px}
+.filebtn[hidden],.ownvid[hidden]{display:none}
+button.filebtn{width:100%;border:0;font:inherit;font-size:16px}
+#err{font-size:13px;margin-top:12px;min-height:1em;opacity:.8}
+
+/* game */
+#game{position:fixed;inset:0;display:none}
+#game.on{display:block}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#progress{position:absolute;left:0;right:0;top:0;height:2px;background:var(--w10)}
+#progress i{display:block;height:100%;width:0;background:var(--w60)}
+.menu{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;width:40px;height:40px;border-radius:50%;border:0;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;display:grid;place-items:center}
+.menu span,.menu span::before,.menu span::after{display:block;width:16px;height:1.5px;background:var(--w90);border-radius:1px;position:relative}
+.menu span::before,.menu span::after{content:"";position:absolute;left:0}
+.menu span::before{top:-5px}.menu span::after{top:5px}
+
+.hud{position:absolute;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:flex-end;gap:16px;pointer-events:none}
+.gauge{width:clamp(92px,14.4vw,128px);aspect-ratio:1;position:relative;flex:none;border-radius:50%;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.gauge svg{width:100%;height:100%;display:block}
+.gauges{display:flex;align-items:flex-end;gap:12px}
+
+.gauge .val{position:absolute;left:0;right:0;top:63%;text-align:center;font-family:"Orbitron",var(--num);font-weight:500;font-size:clamp(17px,2.6vw,23px);line-height:1;letter-spacing:.04em;transition:opacity .2s}
+.gauge .unit{position:absolute;left:0;right:0;top:80%;text-align:center;font-size:clamp(7px,1vw,9px);color:var(--w60);font-family:var(--num)}
+.gauge.over .val{animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.rbadge{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:999px;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:13px;white-space:nowrap}
+.rbadge b{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 4px;border-radius:12px;border:1.5px solid var(--w90);font-family:var(--num);font-weight:500;font-size:12px}
+.side{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin-bottom:6px}
+.limit{width:52px;height:52px;border-radius:50%;border:2px solid var(--w90);display:grid;place-items:center;font-family:var(--num);font-weight:500;font-size:20px;background:var(--w10)}
+.stats{font-family:var(--num);font-weight:300;font-size:13px;line-height:1.7;color:var(--w90);text-shadow:0 1px 4px rgba(0,0,0,.4)}
+.stats b{font-weight:500;color:var(--w)}
+
+/* road signs */
+.tl{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:flex-start;gap:10px;pointer-events:none;z-index:2}
+.nav{background:rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:8px 12px;display:grid;grid-template-columns:auto auto auto;align-items:baseline;gap:5px 10px;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","M PLUS 1",sans-serif;font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.nav .k{font-size:11px;border:1px solid rgba(255,255,255,.85);border-radius:6px;padding:1px 6px;text-align:center;align-self:center}
+.nav .nm small{font-size:10px;opacity:.85;margin-left:3px}
+.nav .d{font-family:var(--num);font-weight:500;font-size:16px;text-align:right}
+.nav .d small{font-size:11px;margin-left:1px}
+.nav [hidden]{display:none}
+@media (max-width:640px){.nav{font-size:12px;padding:6px 10px}.nav .d{font-size:14px}}
+.signs{display:flex;flex-direction:column;align-items:flex-start;gap:8px;pointer-events:none;z-index:2;--s:.7}
+@media (max-width:640px){.signs{--s:.6}.cue{top:42%}}
+.rs{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","M PLUS 1",sans-serif;line-height:1.1;border-radius:calc(10px*var(--s));padding:calc(5px*var(--s));animation:rsIn .45s cubic-bezier(.2,.8,.3,1) both;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.rs.out{animation:rsOut .4s ease-in both}
+.rs.exit,.rs.pa,.rs.spot{text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.rs.road{order:0}.rs.spot{order:1}
+@keyframes rsIn{from{transform:translateX(calc(-100% - 30px));opacity:0}to{transform:none;opacity:1}}
+@keyframes rsOut{to{transform:translateX(calc(-100% - 30px));opacity:0}}
+.rs .in{border-radius:calc(6px*var(--s));display:flex;align-items:center;gap:calc(18px*var(--s));padding:calc(7px*var(--s)) calc(30px*var(--s)) calc(7px*var(--s)) calc(20px*var(--s));min-width:calc(220px*var(--s))}
+.rs .ja{font-weight:400;font-size:calc(21px*var(--s));letter-spacing:.06em}
+.rs .en{font-weight:400;font-size:calc(13px*var(--s));margin-top:2px;letter-spacing:.02em}
+.rs .sub{font-weight:400;font-size:calc(14px*var(--s));margin-top:4px}
+.rs.exit,.rs.pa{background:rgba(0,112,60,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.rs.exit .in,.rs.pa .in{border:1.2px solid rgba(255,255,255,.9);color:#fff}
+.rs.pa .in{display:block;text-align:center;min-width:calc(170px*var(--s))}
+.rs.exit svg{width:calc(34px*var(--s));height:calc(34px*var(--s));flex:none}
+.rs.jct{background:rgba(255,255,255,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:0}
+.rs.jct .in{border:1.2px solid rgb(0,104,55);color:rgb(0,104,55);border-radius:calc(10px*var(--s));display:block;text-align:center;padding:calc(8px*var(--s)) calc(36px*var(--s));min-width:calc(200px*var(--s))}
+.rs.jct .sub{font-weight:400;font-size:calc(14px*var(--s));letter-spacing:.08em}
+.rs.spot{background:rgba(29,79,163,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.rs.spot .in{border:1.2px solid rgba(255,255,255,.9);color:#fff;display:block}
+.rs.spot .ja{font-size:calc(17px*var(--s))}
+.rs.spot .en{font-size:calc(12px*var(--s))}
+@media (prefers-reduced-motion:reduce){.rs,.rs.out{animation-duration:.01s}}
+
+.cue{position:absolute;left:50%;top:22%;transform:translateX(-50%);padding:12px 22px;border-radius:999px;background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:clamp(15px,3vw,20px);letter-spacing:.08em;white-space:nowrap;pointer-events:none;transition:opacity .4s}
+.cue.off{opacity:0}
+
+/* pedals: press position = strength (top light, bottom full) */
+.pedals{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:flex-end}
+.pedal{position:relative;width:58px;height:var(--gh);border-radius:12px;border:1px solid var(--w35);background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:hidden;cursor:pointer;touch-action:none;padding:0}
+.pedal.brk{height:calc(var(--gh)*.8);width:64px}
+.pedals{--gh:clamp(92px,14.4vw,128px)}
+.pedal .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--w60)}
+.pedal .lbl{position:absolute;left:0;right:0;top:10px;font-size:12px;color:var(--w90);text-align:center;mix-blend-mode:difference}
+.pedal .ticks{position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 calc(25% - 1px),var(--w18) calc(25% - 1px) 25%)}
+.pedal.down{border-color:var(--w)}
+
+/* panel */
+.panel{position:absolute;right:0;top:0;bottom:0;width:min(380px,100%);background:rgba(255,255,255,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:var(--ink);padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow:auto;display:none;z-index:5}
+.panel.on{display:block}
+.panel h2{margin:0 0 18px;font-weight:400;font-size:18px}
+.panel h3{margin:22px 0 6px;font-weight:600;font-size:13px}
+.panel .hint{font-size:12px;line-height:1.7;opacity:.6;margin:0 0 10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:14px}
+.toggle{width:44px;height:26px;border-radius:13px;border:0;background:rgba(0,0,0,.15);position:relative;cursor:pointer}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.toggle[aria-pressed="true"]{background:var(--ink)}
+.toggle[aria-pressed="true"]::after{left:21px}
+.seekrow{display:flex;align-items:center;gap:10px;font-family:var(--num)}
+.seekrow input{flex:1;accent-color:var(--ink)}
+.addrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;margin:8px 0}
+.addrow input{width:56px;padding:4px 0;border:0;border-bottom:1px solid rgba(0,0,0,.25);background:transparent;font-family:var(--num);text-align:right;font-size:16px;color:var(--ink)}
+.btn{border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer;font-size:13px}
+.btn.solid{background:var(--ink);color:#fff}
+.seclist{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.seclist td,.seclist th{padding:7px 4px;border-bottom:1px solid rgba(0,0,0,.08);text-align:left}
+.seclist th{font-weight:400;opacity:.55}
+.seclist td.n{font-family:var(--num)}
+.seclist button{background:none;border:0;opacity:.5;cursor:pointer;padding:2px 4px;color:var(--ink)}
+.foot{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+
+#result{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:6;padding:20px}
+#result.on{display:grid}
+#result .box{width:min(340px,100%);background:rgba(255,255,255,.88);color:var(--ink);border-radius:20px;padding:26px}
+#result .score{font-family:var(--num);font-weight:300;font-size:60px;line-height:1}
+#result .sl{font-size:12px;opacity:.55;margin-top:4px}
+#result dl{display:grid;grid-template-columns:1fr auto;gap:8px 16px;margin:20px 0 24px;font-size:13px}
+#result dd{margin:0;font-family:var(--num);font-size:16px;text-align:right}
+#result .btn{width:100%;padding:12px}
+@media (max-width:640px){
+  .pedals{--gh:92px}
+  .hud{flex-direction:column;align-items:flex-start;gap:10px}
+  .side{flex-direction:row;align-items:center;margin:0}
+  .gauges{flex-direction:column;align-items:flex-start;gap:8px}
+  .gauge{width:92px}
+  .gauges{gap:6px}
+}
+@media (prefers-reduced-motion:reduce){ .gauge.over .val{animation:none;opacity:.6} }
+</style>
+</head>
+<body>
+
+<section id="start">
+  <div class="card">
+    <h1>首都高 車窓ドライブ</h1>
+    <p>走る区間を路線図で選んでから、車窓動画を読み込んでください。出発と到着の出口を順にタップします。</p>
+    <div class="map"><svg id="map" viewBox="40 0 900 600" role="group" aria-label="路線図"></svg></div>
+    <div class="pick">
+      <label>出発 <select id="fromSel"></select></label>→
+      <label>到着 <select id="toSel"></select></label>
+    </div>
+    <div id="summary"></div>
+    <label class="field">撮影時の速度（km/h）<input id="baseIn" type="number" min="10" max="150" value="40"></label>
+    <label class="field">制限速度（km/h）<input id="limitIn" type="number" min="10" max="150" value="60"></label>
+    <button class="filebtn" id="goBtn" type="button" hidden>出発</button>
+    <label class="filebtn" id="fileLbl">動画を選んで出発<input id="file" type="file" accept="video/*"></label>
+    <label class="ownvid" id="ownLbl" hidden>手元の動画で走る<input id="file2" type="file" accept="video/*"></label>
+    <div id="err"></div>
+    <div class="keys">
+      ペダルは押す位置で強さが変わります（上ほど強い）<br>
+      キーボード：W/S（↑↓）で踏み込み量を上げ下げ、離すとゆっくり戻る<br>
+      Space 急ブレーキ　P 一時停止　Esc メニュー
+    </div>
+  </div>
+</section>
+
+<section id="game" aria-label="運転画面">
+  <video id="v" playsinline muted preload="auto"></video>
+  <div id="progress"><i></i></div>
+  <div class="tl">
+    <div class="nav" id="nav">
+      <span class="k">目的地</span><span class="nm" id="navGoal"></span><span class="d" id="navGoalD"></span>
+      <span class="k" id="navNextK">次</span><span class="nm" id="navNext"></span><span class="d" id="navNextD"></span>
+    </div>
+    <div class="signs" id="signs" aria-live="polite"></div>
+  </div>
+  <div class="cue off" id="loading">読み込み中…</div>
+  <div class="cue" id="cue">アクセルを踏んで加速</div>
+  <button class="menu" id="menuBtn" aria-label="メニュー"><span></span></button>
+
+  <div class="hud">
+    <div class="gauges">
+    <div class="gauge tach" id="tach">
+      <svg viewBox="0 0 200 200" aria-hidden="true"></svg>
+      <div class="val" id="gear">N</div>
+      <div class="unit">×1000 r/min</div>
+    </div>
+    <div class="gauge" id="gauge">
+      <svg viewBox="0 0 200 200" aria-hidden="true"></svg>
+      <div class="val" id="spd">0</div>
+      <div class="unit">km/h</div>
+    </div>
+    </div>
+    <div class="side">
+      <div class="rbadge" id="rbadge"><b>6</b><span>向島線</span></div>
+      <div class="stats"><b id="dist">0.00</b> km　<b id="time">0:00</b><br>score <b id="score">1000</b></div>
+    </div>
+  </div>
+
+  <div class="pedals">
+    <button class="pedal brk" id="pBrk" aria-label="ブレーキ"><i class="ticks"></i><i class="fill"></i><span class="lbl">ブレーキ</span></button>
+    <button class="pedal acc" id="pAcc" aria-label="アクセル"><i class="ticks"></i><i class="fill"></i><span class="lbl">アクセル</span></button>
+  </div>
+
+  <div class="panel" id="panel" role="dialog" aria-label="メニュー">
+    <h2>一時停止中</h2>
+    <div class="row">エンジン音<button class="toggle" id="sndBtn" aria-pressed="true" aria-label="エンジン音"></button></div>
+
+    <h3>区間ごとの速度補正</h3>
+    <p class="hint">元動画で速度が違う場所（渋滞など）は、位置を合わせて撮影時の速度を入れて追加します。</p>
+    <div class="seekrow"><input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="動画の位置"><span id="seekT">0:00</span></div>
+    <div class="addrow">
+      <label>撮影時 <input type="number" id="addBase" value="40" min="5" max="150"> km/h</label>
+      <label>制限 <input type="number" id="addLimit" value="60" min="10" max="150"></label>
+      <button class="btn" id="addBtn">この位置から追加</button>
+    </div>
+    <table class="seclist"><thead><tr><th>開始</th><th>撮影時</th><th>制限</th><th></th></tr></thead><tbody id="secBody"></tbody></table>
+
+    <div class="foot">
+      <button class="btn" id="restartBtn">最初から</button>
+      <button class="btn solid" id="closePanel">再開</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <div class="box">
+      <div class="score" id="rScore">0</div>
+      <div class="sl">スコア</div>
+      <dl>
+        <dt>走行距離</dt><dd id="rDist"></dd>
+        <dt>所要時間</dt><dd id="rTime"></dd>
+        <dt>平均速度</dt><dd id="rAvg"></dd>
+        <dt>速度超過していた時間</dt><dd id="rOver"></dd>
+        <dt>急ブレーキ</dt><dd id="rEb"></dd>
+      </dl>
+      <button class="btn solid" id="againBtn">もう一度走る</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const v = $('v');
+  const VMAX = 180, MIN_RATE = 0.0625, MAX_RATE = 16;
+  const ACC_MAX = 11, BRK_MAX = 20, EB = 32;
+
+  // gauges
+  const CX=100, CY=100, R=84, A0=-210, A1=30;
+  const pt = (a,r=R) => [CX + r*Math.cos(a*Math.PI/180), CY + r*Math.sin(a*Math.PI/180)];
+  const arc = (a,b) => { const [x0,y0]=pt(a),[x1,y1]=pt(b); return `M${x0} ${y0} A${R} ${R} 0 ${(b-a)>180?1:0} 1 ${x1} ${y1}`; };
+  function makeGauge(svg, max, minor, mid, major, label, red){
+    const ang = x => A0 + (A1-A0) * Math.max(0,Math.min(x,max))/max;
+    let h=`<path d="${arc(A0,A1)}" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="3" stroke-linecap="round"/>`;
+    if(red) h+=`<path d="${arc(ang(red),A1)}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="7"/>`;
+    const n=Math.round(max/minor);
+    for(let k=0;k<=n;k++){
+      const x=k*minor, isMaj=Math.abs(x/major-Math.round(x/major))<1e-6, isMid=!isMaj&&Math.abs(x/mid-Math.round(x/mid))<1e-6;
+      const a=ang(x), len=isMaj?9:isMid?6:3.5;
+      const [x0,y0]=pt(a,R-7),[x1,y1]=pt(a,R-7-len);
+      h+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="rgba(255,255,255,${isMaj?.85:isMid?.6:.35})" stroke-width="${isMaj?1.6:1}"/>`;
+      if(isMaj){ const [tx,ty]=pt(a,R-28); h+=`<text x="${tx}" y="${ty+4.5}" fill="rgba(255,255,255,.75)" font-size="13" text-anchor="middle" font-family="Oxanium,sans-serif" font-weight="300">${label(x)}</text>`; }
+    }
+    h+=`<path class="gv" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round"/><line class="gn" x1="100" y1="100" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="100" r="6" fill="#fff"/>`;
+    svg.innerHTML=h;
+    const gv=svg.querySelector('.gv'), gn=svg.querySelector('.gn');
+    return x => { const a=ang(x),[nx,ny]=pt(a,R-4),[bx,by]=pt(a+180,10); gn.setAttribute('x1',bx); gn.setAttribute('y1',by); gn.setAttribute('x2',nx); gn.setAttribute('y2',ny); gv.setAttribute('d', a>A0+0.5?arc(A0,a):''); };
+  }
+  const setSpeedo = makeGauge($('gauge').querySelector('svg'), VMAX, 2, 10, 30, x=>x);
+  const setTach = makeGauge($('tach').querySelector('svg'), 8000, 250, 500, 1000, x=>x/1000, 6500);
+  setSpeedo(0); setTach(800);
+
+  // engine model
+  const GEARS=[0,22,45,72,102,138,VMAX+1], IDLE=800, SHIFT=6200;
+  let rpm=IDLE, gearNow=1;
+  function updateRpm(dt){
+    let g=1; while(g<GEARS.length-1 && speed>GEARS[g]) g++;
+    gearNow=g;
+    const target = Math.max(IDLE + acc*900*(speed<3?1:0), SHIFT*speed/GEARS[g]*(0.55+0.45*Math.min(1,speed/GEARS[g]*1.2)));
+    rpm += (target-rpm)*Math.min(1,dt*8);
+  }
+
+  // state
+  let speed=0, dist=0, elapsed=0, overTime=0, penalty=0, ebCount=0, ebLatch=false;
+  let acc=0, brk=0, eb=false, cruise=true;
+  const CRUISE=30;             // pedal amounts 0..1
+  let touchAcc=null, touchBrk=null;       // touch-set amounts (null = not touching)
+  let kAccUp=false,kAccDn=false,kBrkUp=false,kBrkDn=false;
+  let keyAcc=0, keyBrk=0;
+  let paused=false, running=false, lastT=0, lastRate=-1, fileKey='';
+  let defBase=40, defLimit=60, sections=[];
+
+  const fmt = s => { s=Math.max(0,s|0); return ((s/60)|0)+':'+String(s%60).padStart(2,'0'); };
+  const sectionAt = t => { let c={base:defBase,limit:defLimit}; for(const s of sections){ if(s.t<=t+0.01) c=s; else break; } return c; };
+  const save = () => { try{ localStorage.setItem(fileKey, JSON.stringify({sections})); }catch(e){} };
+  const load = () => { try{ const d=JSON.parse(localStorage.getItem(fileKey)||'null'); if(d&&Array.isArray(d.sections)) sections=d.sections; }catch(e){} };
+
+  // engine sound
+  let actx=null, osc, osc2, gain, lp, soundOn=true, rumbleLp, hissBp, rumbleGain, hissGain, hissLp2;
+  function initAudio(){
+    try{
+      actx=new (window.AudioContext||window.webkitAudioContext)();
+      osc=actx.createOscillator(); osc.type='triangle';
+      osc2=actx.createOscillator(); osc2.type='sine';
+      lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=0.4;
+      gain=actx.createGain(); gain.gain.value=0;
+      const g2=actx.createGain(); g2.gain.value=.8;
+      osc.connect(lp); osc2.connect(g2); g2.connect(lp); lp.connect(gain); gain.connect(actx.destination);
+      osc.start(); osc2.start();
+      // road noise: brown noise (rumble) + filtered white noise (tyre hiss)
+      const len=actx.sampleRate*3, buf=actx.createBuffer(1,len,actx.sampleRate), d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.5;
+      const buf2=actx.createBuffer(1,len,actx.sampleRate), d2=buf2.getChannelData(0);
+      for(let i=0;i<len;i++) d2[i]=(Math.random()*2-1)*0.5;
+      const src1=actx.createBufferSource(); src1.buffer=buf; src1.loop=true;
+      const src2=actx.createBufferSource(); src2.buffer=buf2; src2.loop=true;
+      rumbleLp=actx.createBiquadFilter(); rumbleLp.type='lowpass'; rumbleLp.frequency.value=300; rumbleLp.Q.value=0.3;
+      hissBp=actx.createBiquadFilter(); hissBp.type='lowpass'; hissBp.frequency.value=600; hissBp.Q.value=0.2;
+      hissLp2=actx.createBiquadFilter(); hissLp2.type='lowpass'; hissLp2.frequency.value=600; hissLp2.Q.value=0.2;
+      rumbleGain=actx.createGain(); rumbleGain.gain.value=0;
+      hissGain=actx.createGain(); hissGain.gain.value=0;
+      src1.connect(rumbleLp); rumbleLp.connect(rumbleGain); rumbleGain.connect(actx.destination);
+      src2.connect(hissBp); hissBp.connect(hissLp2); hissLp2.connect(hissGain); hissGain.connect(actx.destination);
+      src1.start(); src2.start();
+    }catch(e){ actx=null; }
+  }
+  function updateAudio(){
+    if(!actx) return;
+    const f=rpm/60, now=actx.currentTime;
+    osc.frequency.setTargetAtTime(f,now,.05); osc2.frequency.setTargetAtTime(f/2,now,.05);
+    lp.frequency.setTargetAtTime(140+rpm*.06+acc*160,now,.1);
+    const on=soundOn&&running&&!paused&&pendingSeek===null, k=speed/VMAX;
+    gain.gain.setTargetAtTime(on?(.06+acc*.05+k*.03):0,now,.08);
+    if(rumbleGain){
+      rumbleLp.frequency.setTargetAtTime(160+k*160,now,.4);
+      rumbleGain.gain.setTargetAtTime(on?(.04+k*.12):0,now,.3);
+      const hf=380+k*900; hissBp.frequency.setTargetAtTime(hf,now,.4); hissLp2.frequency.setTargetAtTime(hf,now,.4);
+      hissGain.gain.setTargetAtTime(on?(.05+k*.16):0,now,.4);
+    }
+  }
+
+  // ---- video source ----
+  // 動画をネット上に置いたら、そのURLをここに入れる（空なら毎回ファイルを選ぶ方式）
+  const VIDEO_URL='';
+  if(VIDEO_URL){ $('goBtn').hidden=false; $('fileLbl').hidden=true; $('ownLbl').hidden=false; }
+  let loadedSrc=null;
+  function loadVideo(src,key){
+    defBase=Math.max(5,+$('baseIn').value||40); defLimit=Math.max(10,+$('limitIn').value||60);
+    if(!actx) initAudio();
+    if(actx&&actx.state==='suspended') actx.resume();
+    if(loadedSrc===src && v.readyState>=1){ start(); return; }
+    loadedSrc=src;
+    $('err').textContent='読み込み中…';
+    v.src=src;
+    v.onloadedmetadata=()=>{
+      fileKey='shutoko:'+key+':'+Math.round(v.duration);
+      sections=[]; load();
+      $('seek').max=v.duration.toFixed(1); $('err').textContent='';
+      start();
+    };
+    v.onerror=()=>{ loadedSrc=null; $('err').textContent= src===VIDEO_URL ? '動画を読み込めませんでした。通信状況を確認してください。' : 'この動画は再生できません。MP4（H.264）形式で試してください。'; };
+  }
+  const pickFile=e=>{ const f=e.target.files[0]; if(f) loadVideo(URL.createObjectURL(f), f.name); };
+  $('file').addEventListener('change',pickFile);
+  $('file2').addEventListener('change',pickFile);
+  $('goBtn').onclick=()=>loadVideo(VIDEO_URL,'hosted');
+
+  // ---- road signs: [mmss, kind, 日本語, English] ----
+  const SIGNS=[
+    ['0025','jct','小菅','Kosuge','IC'],
+    ['0118','jct','堀切','Horikiri','JCT'],
+    ['0220','exit','堤通','Tsutsumidori'],
+    ['0351','exit','向島','Mukojima'],
+    ['0351','spot','東京スカイツリー','Tokyo Skytree'],
+    ['0556','pa','駒形','Komagata','PA'],
+    ['1005','exit','箱崎','Hakozaki'],
+    ['1030','jct','箱崎','Hakozaki','JCT'],
+    ['1123','jct','江戸橋','Edobashi','JCT'],
+    ['1124','spot','東京証券取引所','Tokyo Stock Exchange'],
+    ['1146','spot','八重洲','Yaesu'],
+    ['1223','exit','宝町','Takaracho'],
+    ['1242','exit','東銀座','Higashi-ginza'],
+    ['1317','exit','新富町','Shintomicho'],
+    ['1333','exit','銀座','Ginza'],
+    ['1357','spot','国立がん研究センター中央病院','National Cancer Center Hospital'],
+    ['1423','spot','汐留トンネル','Shiodome Tunnel'],
+    ['1543','jct','浜崎橋','Hamazakibashi','JCT'],
+    ['1655','exit','芝公園','Shibakoen'],
+    ['1710','spot','東京タワー','Tokyo Tower'],
+    ['1710','spot','麻布台ヒルズ森JPタワー','Azabudai Hills Mori JP Tower'],
+    ['1744','jct','一ノ橋','Ichinohashi','JCT'],
+    ['1813','exit','飯倉','Iikura'],
+    ['1827','spot','飯倉トンネル','Iikura Tunnel'],
+    ['1841','jct','谷町','Tanimachi','JCT'],
+    ['1934','spot','六本木ヒルズ森タワー','Roppongi Hills Mori Tower'],
+    ['2030','exit','高樹町','Takagicho'],
+    ['2116','spot','青山トンネル','Aoyama Tunnel'],
+    ['2116','spot','青山学院大学','Aoyama Gakuin University'],
+    ['2138','spot','渋谷スクランブルスクエア','Shibuya Scramble Square'],
+    ['2218','exit','渋谷','Shibuya'],
+    ['2305','jct','大橋','Ohashi','JCT'],
+    ['2648','exit','三軒茶屋','Sangenjaya'],
+    ['3050','exit','用賀','Yoga'],
+  ].map(([m,kind,ja,en,sub])=>({t:+m.slice(0,2)*60+ +m.slice(2),kind,ja,en,sub}));
+  const SIGN_SEC=4;
+  // km travelled in the video between two video times, using each section's filming speed
+  function kmBetween(a,b){
+    if(b<=a) return 0;
+    const pts=[{t:0,base:defBase},...sections].sort((x,y)=>x.t-y.t);
+    let km=0;
+    for(let i=0;i<pts.length;i++){
+      const s0=Math.max(a,pts[i].t), s1=Math.min(b, i+1<pts.length?pts[i+1].t:Infinity);
+      if(s1>s0) km+=pts[i].base*(s1-s0)/3600;
+    }
+    return km;
+  }
+  const signName=sg=> sg.kind==='exit'?sg.ja+'出口' : sg.kind==='jct'?sg.ja+'JCT' : sg.kind==='pa'?sg.ja+'PA' : sg.ja;
+  const fmtKm=k=>`${k<10?k.toFixed(1):k.toFixed(0)}<small>km</small>`;
+  let navTick=0;
+  function updateNav(dt){
+    navTick-=dt; if(navTick>0) return; navTick=.25;
+    const cur=v.currentTime, B=PICK[toI];
+    $('navGoal').innerHTML=`${B.ja}<small>まで</small>`;
+    $('navGoalD').innerHTML=fmtKm(kmBetween(cur,B.t));
+    const nx=SIGNS.find(sg=>(sg.kind==='exit'||sg.kind==='jct') && sg.t>cur+0.05 && sg.t<B.t-0.05);
+    ['navNextK','navNext','navNextD'].forEach(id=>$(id).hidden=!nx);
+    if(nx){ $('navNext').innerHTML=`${signName(nx)}<small>まで</small>`; $('navNextD').innerHTML=fmtKm(kmBetween(cur,nx.t)); }
+  }
+  const ARROW='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M30 34 L12 16" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M7 7 L24 9 L9 24 Z" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  let liveSigns=[], prevVT=0;
+  function showSign(sg){
+    const el=document.createElement('div');
+    const road=sg.kind!=='spot';
+    el.className=`rs ${sg.kind} ${road?'road':'spot'}`;
+    if(sg.kind==='exit') el.innerHTML=`<div class="in">${ARROW}<div><div class="ja">${sg.ja}</div><div class="en">${sg.en}</div><div class="sub">出口</div></div></div>`;
+    else if(sg.kind==='jct'||sg.kind==='pa') el.innerHTML=`<div class="in"><div class="ja">${sg.ja}</div><div class="en">${sg.en}</div><div class="sub">${sg.sub}</div></div>`;
+    else el.innerHTML=`<div class="in"><div class="ja">${sg.ja}</div><div class="en">${sg.en}</div></div>`;
+    $('signs').appendChild(el);
+    liveSigns.push({el,left:SIGN_SEC});
+  }
+  function updateSigns(dt){
+    const cur=v.currentTime;
+    if(cur>=prevVT && cur-prevVT<3){ for(const sg of SIGNS) if(sg.t>prevVT && sg.t<=cur) showSign(sg); }
+    prevVT=cur;
+    liveSigns=liveSigns.filter(o=>{
+      o.left-=dt; if(o.left>0) return true;
+      o.el.classList.add('out'); setTimeout(()=>o.el.remove(),420); return false;
+    });
+  }
+  function clearSigns(){ liveSigns=[]; $('signs').innerHTML=''; prevVT=v.currentTime; }
+
+  // ---- route map ----
+  const T=m=>+m.slice(0,2)*60+ +m.slice(2);
+  // [名前, 種類, 動画時刻, x, y, ラベル位置]
+  const NODES=[
+    ['小菅','ic','0000',860,30,'r'],
+    ['堀切','jct',null,860,78,'l'],
+    ['堤通','exit','0220',860,128,'r'],
+    ['向島','exit','0351',860,178,'r'],
+    ['駒形PA','pa',null,860,228,'r'],
+    ['両国','jct',null,860,280,'r'],
+    ['箱崎','exit','1005',818,280,'b'],
+    ['箱崎','jct',null,768,280,'t'],
+    ['江戸橋','jct',null,710,280,'l'],
+    ['宝町','exit','1223',710,322,'l'],
+    ['京橋','jct',null,710,365,'r'],
+    ['東銀座','exit','1242',662,365,'l'],
+    ['新富町','exit','1317',690,425,'l'],
+    ['銀座','exit','1333',662,465,'l'],
+    ['浜崎橋','jct',null,600,540,'b'],
+    ['芝公園','exit','1655',525,540,'b'],
+    ['一ノ橋','jct',null,460,500,'l'],
+    ['飯倉','exit','1813',460,425,'r'],
+    ['谷町','jct',null,460,350,'t'],
+    ['高樹町','exit','2030',429,390,'l'],
+    ['渋谷','exit','2218',405,420,'l'],
+    ['大橋','jct',null,320,470,'b'],
+    ['三軒茶屋','exit','2648',200,470,'t'],
+    ['用賀','exit','3050',100,470,'t'],
+  ].map(([ja,kind,m,x,y,lp])=>({ja,kind,t:m?T(m):null,x,y,lp}));
+  const PICK=NODES.filter(n=>n.kind==='exit'||n.kind==='ic');
+  let fromI=0, toI=PICK.length-1, tapNext='from';
+  const ROUTES=[{t:0,no:'6',name:'向島線'},{t:T('1123'),no:'C1',name:'都心環状線'},{t:T('1841'),no:'3',name:'渋谷線'}];
+  const routeAt=t=>{ let r=ROUTES[0]; for(const x of ROUTES) if(t>=x.t) r=x; return r; };
+
+  function renderMap(){
+    const svg=$('map'), A=PICK[fromI], B=PICK[toI];
+    let h=`<path class="line" stroke="#2C5BA8" d="M860 30 V280 H710"/>
+      <path class="line" stroke="#6CB33F" d="M710 280 V378 Q710 396 700 410 L620 525 Q610 540 590 540 H478 Q460 540 460 522 V350 M710 365 H662"/>
+      <path class="line" stroke="#F0961E" d="M460 350 L395 433 Q365 470 325 470 H80"/>
+      <text class="rname" x="885" y="105" fill="#2C5BA8" style="fill:#2C5BA8">⑥ 向島線</text>
+      <text class="rname" x="555" y="490" text-anchor="middle" style="fill:#4E9A2A">C1 都心環状線</text>
+      <text class="rname" x="200" y="520" style="fill:#D97C0A">③ 渋谷線</text>`;
+    NODES.forEach(n=>{
+      const lx = n.lp==='r'?n.x+18 : n.lp==='l'?n.x-18 : n.x;
+      const ly = n.lp==='t'?n.y-20 : n.lp==='b'?n.y+32 : n.y+7;
+      const anchor = n.lp==='r'?'start':n.lp==='l'?'end':'middle';
+      if(n.kind==='jct'){
+        const w=n.ja.length*17+18, rx = anchor==='start'?lx-6 : anchor==='end'?lx-w+6 : lx-w/2;
+        h+=`<g class="jct"><rect x="${rx}" y="${ly-18}" width="${w}" height="25" rx="12.5"/><text x="${rx+w/2}" y="${ly}" text-anchor="middle">${n.ja}</text></g>`;
+        return;
+      }
+      if(n.kind==='pa'){ h+=`<circle cx="${n.x}" cy="${n.y}" r="5" fill="#fff" stroke="#888" stroke-width="2"/><text x="${lx}" y="${ly}" font-size="15" opacity=".6">${n.ja}</text>`; return; }
+      const i=PICK.indexOf(n), inR=n.t>=A.t && n.t<=B.t, isEnd=n===A||n===B;
+      h+=`<g class="node ${isEnd?'end':inR?'in':'out'}" data-i="${i}" tabindex="0" role="button" aria-label="${n.ja}">
+        <circle cx="${n.x}" cy="${n.y}" r="22" fill="transparent"/>
+        <circle class="dot" cx="${n.x}" cy="${n.y}" r="8"/>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" font-size="19">${n.ja}</text></g>`;
+    });
+    [[A,'出発'],[B,'到着']].forEach(([n,l])=>{
+      const below = n.ja==='飯倉';
+      const tx = below ? n.x : n.lp==='r' ? n.x-44 : n.lp==='l' ? n.x+44 : n.x;
+      const ty = below ? n.y+34 : n.lp==='t' ? n.y+30 : n.lp==='b' ? n.y-24 : n.y+4;
+      h+=`<rect class="tagbg" x="${tx-23}" y="${ty-15}" width="46" height="21" rx="10.5"/><text class="tag" x="${tx}" y="${ty+1}" text-anchor="middle">${l}</text>`;
+    });
+    svg.innerHTML=h;
+    $('fromSel').value=fromI; $('toSel').value=toI;
+    const min=Math.round((B.t-A.t)/60);
+    $('summary').textContent=`${A.ja}${A.kind==='ic'?'IC':''} → ${B.ja}出口　約${Math.max(1,min)}分`;
+  }
+  function pick(i){
+    if(tapNext==='from'){ if(i>=PICK.length-1) { toI=i; } else { fromI=i; if(toI<=fromI) toI=PICK.length-1; tapNext='to'; } }
+    else { if(i>fromI) { toI=i; tapNext='from'; } else { fromI=Math.min(i,PICK.length-2); } }
+    renderMap();
+  }
+  $('map').addEventListener('click',e=>{ const g=e.target.closest('.node'); if(g) pick(+g.dataset.i); });
+  $('map').addEventListener('keydown',e=>{ const g=e.target.closest('.node'); if(g&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); pick(+g.dataset.i); } });
+  PICK.forEach((n,i)=>{ const nm=n.ja+(n.kind==='ic'?'IC':''); if(i<PICK.length-1) $('fromSel').add(new Option(nm,i)); if(i>0) $('toSel').add(new Option(nm,i)); });
+  $('fromSel').onchange=e=>{ fromI=+e.target.value; if(toI<=fromI) toI=fromI+1; tapNext='to'; renderMap(); };
+  $('toSel').onchange=e=>{ toI=+e.target.value; if(toI<=fromI) fromI=toI-1; tapNext='from'; renderMap(); };
+  renderMap();
+
+  let startT=0, goalT=Infinity, lastRoute=null, pendingSeek=null, seekDone=false, seekFirst=0, seekLast=0;
+  function issueSeek(){
+    seekLast=performance.now();
+    // some browsers (iOS Safari) ignore seeking until playback has started once
+    const p=v.play(); if(p&&p.catch) p.catch(()=>{});
+    try{ if(v.fastSeek && pendingSeek>5) v.fastSeek(pendingSeek); else v.currentTime=pendingSeek; }catch(e){}
+  }
+  function beginSeek(t){
+    pendingSeek=t; seekDone=false; seekFirst=seekLast=performance.now();
+    if(t<0.5){ pendingSeek=null; v.pause(); try{ v.currentTime=0; }catch(e){} return; }
+    $('loading').classList.remove('off');
+    v.addEventListener('seeked',()=>{ seekDone=true; },{once:true});
+    if(v.readyState>=1) issueSeek(); else v.addEventListener('loadedmetadata',issueSeek,{once:true});
+  }
+  function endSeek(){ pendingSeek=null; v.pause(); prevVT=v.currentTime; $('loading').classList.add('off'); lastT=performance.now(); }
+  function start(){
+    speed=CRUISE; cruise=true; $('cue').classList.remove('off');
+    dist=elapsed=overTime=penalty=ebCount=0; keyAcc=keyBrk=0;
+    const A=PICK[fromI], B=PICK[toI];
+    startT = A.kind==='ic' ? 0 : A.t+0.5;
+    goalT = Math.min(B.t+2, v.duration||Infinity);
+    lastRate=-1; beginSeek(startT);
+    $('start').style.display='none'; $('game').classList.add('on');
+    $('result').classList.remove('on'); $('panel').classList.remove('on');
+    running=true; paused=false; lastT=performance.now();
+    clearSigns(); prevVT=startT; lastRoute=null; navTick=0; renderSections(); requestAnimationFrame(loop);
+  }
+
+  function loop(now){
+    if(!running) return;
+    const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
+
+    // keyboard: hold to press deeper, release to ease off
+    const step=dt*1.4;
+    keyAcc = kAccUp ? Math.min(1,keyAcc+step) : kAccDn ? Math.max(0,keyAcc-step*1.5) : Math.max(0,keyAcc-step*2);
+    keyBrk = kBrkUp ? Math.min(1,keyBrk+step) : kBrkDn ? Math.max(0,keyBrk-step*1.5) : Math.max(0,keyBrk-step*2);
+    acc = touchAcc!==null ? touchAcc : keyAcc;
+    brk = touchBrk!==null ? touchBrk : keyBrk;
+
+    // make sure the video actually jumped to the chosen start point
+    if(pendingSeek!==null){
+      const t=performance.now(), near=Math.abs(v.currentTime-pendingSeek)<4;
+      if((seekDone||near) && !v.seeking && v.readyState>=2) endSeek();
+      else if(t-seekFirst>12000) endSeek();                       // give up waiting, start where we are
+      else{
+        if(!v.seeking && t-seekLast>3000) issueSeek();             // retry occasionally, not every frame
+        drawPedals(); updateAudio(); requestAnimationFrame(loop); return;
+      }
+    }
+
+    if(!paused){
+      if(cruise && (acc>0.02 || brk>0.02 || eb)){ cruise=false; $('cue').classList.add('off'); }
+      let a;
+      if(cruise) a=0;
+      else if(eb) a=-EB;
+      else{
+        a = acc*ACC_MAX*(1-speed/(VMAX+15)) - brk*BRK_MAX - (2+speed*.015)*(1-acc*.9);
+      }
+      speed=Math.max(CRUISE,Math.min(VMAX,speed+a*dt));
+      if(eb&&speed>CRUISE+5&&!ebLatch){ ebCount++; penalty+=30; ebLatch=true; }
+      if(!eb) ebLatch=false;
+
+      const sec=sectionAt(v.currentTime), rate=speed/sec.base;
+      if(rate<MIN_RATE){ if(!v.paused) v.pause(); }
+      else{
+        const r=Math.min(MAX_RATE,rate);
+        if(Math.abs(r-lastRate)>0.01){ v.playbackRate=r; lastRate=r; }
+        if(v.paused&&!v.ended) v.play().catch(()=>{});
+      }
+      dist+=speed*dt/3600; elapsed+=dt;
+      const over=speed-sec.limit;
+      if(over>0){ overTime+=dt; penalty+=(over>20?2:over>10?1:.4)*dt*over/5; }
+      updateRpm(dt); updateSigns(dt); updateNav(dt); draw(sec);
+      if(v.ended||v.currentTime>=goalT||v.currentTime>=v.duration-0.05) finish();
+    }
+    drawPedals();
+    updateAudio();
+    requestAnimationFrame(loop);
+  }
+
+  function draw(sec){
+    $('spd').textContent=Math.round(speed);
+    setSpeedo(speed); setTach(rpm);
+    $('gear').textContent = speed<0.5 ? 'N' : gearNow;
+    $('gauge').classList.toggle('over',speed>sec.limit+0.5);
+    $('dist').textContent=dist.toFixed(2);
+    $('time').textContent=fmt(elapsed);
+    $('score').textContent=Math.max(0,Math.round(1000-penalty));
+    $('progress').firstElementChild.style.width=(Math.max(0,Math.min(1,(v.currentTime-startT)/(goalT-startT)))*100||0)+'%';
+    const r=routeAt(v.currentTime);
+    if(r!==lastRoute){ lastRoute=r; $('rbadge').innerHTML=`<b>${r.no}</b><span>${r.name}</span>`; }
+  }
+  function drawPedals(){
+    $('pAcc').querySelector('.fill').style.height=(acc*100)+'%';
+    $('pBrk').querySelector('.fill').style.height=((eb?1:brk)*100)+'%';
+  }
+
+  function finish(){
+    paused=true; v.pause();
+    $('rScore').textContent=Math.max(0,Math.round(1000-penalty));
+    $('rDist').textContent=dist.toFixed(2)+' km';
+    $('rTime').textContent=fmt(elapsed);
+    $('rAvg').textContent=(elapsed>0?dist/elapsed*3600:0).toFixed(1)+' km/h';
+    $('rOver').textContent=fmt(overTime);
+    $('rEb').textContent=ebCount+' 回';
+    $('result').classList.add('on');
+  }
+  $('againBtn').onclick=start;
+
+  // menu
+  function setPaused(p){ paused=p; if(p) v.pause(); else { lastT=performance.now(); lastRate=-1; } }
+  function openPanel(){
+    setPaused(true);
+    $('seek').value=v.currentTime; $('seekT').textContent=fmt(v.currentTime);
+    const s=sectionAt(v.currentTime); $('addBase').value=s.base; $('addLimit').value=s.limit;
+    $('panel').classList.add('on');
+  }
+  function closePanel(){ $('panel').classList.remove('on'); setPaused(false); }
+  $('menuBtn').onclick=openPanel;
+  $('closePanel').onclick=closePanel;
+  $('restartBtn').onclick=start;
+  $('sndBtn').onclick=e=>{ soundOn=!soundOn; e.currentTarget.setAttribute('aria-pressed',soundOn); };
+  $('seek').addEventListener('input',e=>{ v.currentTime=+e.target.value; clearSigns(); prevVT=+e.target.value; $('seekT').textContent=fmt(+e.target.value); });
+  $('addBtn').onclick=()=>{
+    const t=+(+$('seek').value).toFixed(1);
+    const base=Math.max(5,+$('addBase').value||defBase), limit=Math.max(10,+$('addLimit').value||defLimit);
+    sections=sections.filter(s=>Math.abs(s.t-t)>0.3); sections.push({t,base,limit}); sections.sort((a,b)=>a.t-b.t);
+    save(); renderSections();
+  };
+  function renderSections(){
+    const rows=[`<tr><td class="n">0:00</td><td class="n">${defBase}</td><td class="n">${defLimit}</td><td style="opacity:.5">基本</td></tr>`];
+    sections.forEach((s,i)=>rows.push(`<tr><td class="n">${fmt(s.t)}</td><td class="n">${s.base}</td><td class="n">${s.limit}</td><td><button data-i="${i}">削除</button></td></tr>`));
+    $('secBody').innerHTML=rows.join('');
+  }
+  $('secBody').addEventListener('click',e=>{ const i=e.target.dataset.i; if(i===undefined) return; sections.splice(+i,1); save(); renderSections(); });
+
+  // keyboard
+  const down={ArrowUp:()=>kAccUp=true,KeyW:()=>kAccUp=true,ArrowDown:()=>kBrkUp=true,KeyS:()=>kBrkUp=true,Space:()=>eb=true};
+  const up={ArrowUp:()=>kAccUp=false,KeyW:()=>kAccUp=false,ArrowDown:()=>kBrkUp=false,KeyS:()=>kBrkUp=false,Space:()=>eb=false};
+  addEventListener('keydown',e=>{
+    if(e.target.tagName==='INPUT') return;
+    if(down[e.code]){ down[e.code](); e.preventDefault(); }
+    else if(e.code==='KeyP'&&running&&!$('panel').classList.contains('on')) setPaused(!paused);
+    else if(e.code==='Escape'&&running) ($('panel').classList.contains('on')?closePanel:openPanel)();
+  });
+  addEventListener('keyup',e=>{ if(up[e.code]) up[e.code](); });
+  addEventListener('blur',()=>{ kAccUp=kBrkUp=eb=false; touchAcc=touchBrk=null; });
+
+  // pedals: vertical position sets strength (top = light, bottom = full)
+  function bindPedal(el,set){
+    let id=null;
+    const amt=e=>{ const r=el.getBoundingClientRect(); return Math.max(0.05,Math.min(1,1-(e.clientY-r.top)/r.height)); };
+    el.addEventListener('pointerdown',e=>{
+      e.preventDefault(); id=e.pointerId; el.setPointerCapture(id); el.classList.add('down'); set(amt(e));
+      if(actx&&actx.state==='suspended') actx.resume();
+    });
+    el.addEventListener('pointermove',e=>{ if(e.pointerId===id) set(amt(e)); });
+    const end=e=>{ if(e.pointerId!==id) return; id=null; el.classList.remove('down'); set(null); };
+    el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
+    el.addEventListener('contextmenu',e=>e.preventDefault());
+  }
+  bindPedal($('pAcc'),x=>touchAcc=x);
+  bindPedal($('pBrk'),x=>touchBrk=x);
+})();
+</script>
+</body>
+</html>
+
+</body></html>
